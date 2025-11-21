@@ -1,0 +1,35 @@
+[project]
+name = "gost-backup-vault"
+version = "0.1.0"
+description = "Wrapper around restic/borg/tar with GOST encryption support"
+authors = [
+    {name = "run-as-daemon.ru", email = "info@run-as-daemon.ru"},
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.9.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "prometheus-client>=0.17.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+gost-backup = "gost_backup_vault.cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]

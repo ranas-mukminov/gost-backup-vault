@@ -1,0 +1,90 @@
+type: object
+required:
+  - node
+  - backend
+  - crypto_profile
+  - jobs
+properties:
+  node:
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        type: string
+        description: "Logical node identifier"
+      os:
+        type: string
+        description: "Operating system identifier"
+  backend:
+    type: object
+    required:
+      - type
+      - repo
+    properties:
+      type:
+        type: string
+        enum: ["restic", "borg", "tar"]
+      repo:
+        type: string
+        description: "Path to repository or storage URL"
+      extra_args:
+        type: array
+        items:
+          type: string
+  crypto_profile:
+    type: object
+    required:
+      - name
+      - gost_cipher
+    properties:
+      name:
+        type: string
+      gost_cipher:
+        type: string
+        enum: ["magma", "kuznyechik", "none"]
+      mode:
+        type: string
+        enum: ["wrap_key", "full_encrypt"]
+        default: "wrap_key"
+      provider:
+        type: string
+        default: "local_software"
+      key_id:
+        type: string
+  jobs:
+    type: array
+    items:
+      type: object
+      required:
+        - name
+        - paths
+        - schedule
+      properties:
+        name:
+          type: string
+        paths:
+          type: array
+          items:
+            type: string
+        exclude:
+          type: array
+          items:
+            type: string
+        schedule:
+          type: string
+          description: "Cron-like or systemd calendar format"
+        retention:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: ["tiered", "simple"]
+            daily:
+              type: integer
+            weekly:
+              type: integer
+            monthly:
+              type: integer
+            keep_last:
+              type: integer

@@ -1,0 +1,6 @@
+from typing import Protocol, BinaryIO
+from ..domain.models import CryptoProfile
+
+class CryptoProvider(Protocol):
+    def encrypt_stream(self, input_stream: BinaryIO, output_stream: BinaryIO, profile: CryptoProfile) -> None: ...
+    def decrypt_stream(self, input_stream: BinaryIO, output_stream: BinaryIO, profile: CryptoProfile) -> None: ...
