@@ -13,11 +13,21 @@ dependencies = [
     "pyyaml>=6.0",
     "prometheus-client>=0.17.0",
     "rich>=13.0.0",
+    "requests>=2.31.0",
 ]
 
 [project.scripts]
 gost-backup = "gost_backup_vault.cli.main:app"
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "ruff",
+    "mypy",
+    "types-PyYAML",
+    "types-requests",
+]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

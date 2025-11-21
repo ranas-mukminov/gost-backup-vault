@@ -1,20 +1,37 @@
-from typing import Protocol, List
+from dataclasses import dataclass
+from typing import List, Protocol
 from ..domain.models import BackupJob, BackupResult
 
-class BackendInitResult(Protocol):
-    pass
 
-class CheckResult(Protocol):
-    pass
+@dataclass
+class BackendInitResult:
+    initialized: bool = True
+    message: str | None = None
 
-class BackupSnapshot(Protocol):
-    pass
 
-class RestoreSpec(Protocol):
-    pass
+@dataclass
+class CheckResult:
+    ok: bool = True
+    message: str | None = None
 
-class RestoreResult(Protocol):
-    pass
+
+@dataclass
+class BackupSnapshot:
+    snapshot_id: str
+    created_at: float | None = None
+
+
+@dataclass
+class RestoreSpec:
+    snapshot_id: str = "latest"
+    target_path: str | None = None
+
+
+@dataclass
+class RestoreResult:
+    success: bool = True
+    message: str | None = None
+
 
 class BackupBackend(Protocol):
     def init_repo(self, job: BackupJob) -> BackendInitResult: ...

@@ -1,9 +1,20 @@
+import logging
+import os
 import subprocess
 import time
-import os
 from typing import List
-from ..domain.models import BackupJob, BackupResult, BackendConfig
-from .base import BackupBackend, BackendInitResult, CheckResult, BackupSnapshot, RestoreSpec, RestoreResult
+
+from ..domain.models import BackendConfig, BackupJob, BackupResult
+from .base import (
+    BackupBackend,
+    BackupSnapshot,
+    BackendInitResult,
+    CheckResult,
+    RestoreResult,
+    RestoreSpec,
+)
+
+logger = logging.getLogger(__name__)
 
 class TarBackend(BackupBackend):
     def __init__(self, config: BackendConfig):
@@ -29,12 +40,13 @@ class TarBackend(BackupBackend):
         duration = time.time() - start_time
 
         if res.returncode != 0:
-             return BackupResult(
+            logger.error("Tar backup failed for job %s: %s", job.name, res.stderr)
+            return BackupResult(
                 job_name=job.name,
                 success=False,
                 duration_seconds=duration,
                 size_bytes=0,
-                error_message=res.stderr
+                error_message=res.stderr,
             )
         
         size_bytes = os.path.getsize(archive_path)
@@ -44,7 +56,7 @@ class TarBackend(BackupBackend):
             success=True,
             duration_seconds=duration,
             size_bytes=size_bytes,
-            snapshot_id=archive_name
+            snapshot_id=archive_name,
         )
 
     def restore(self, job: BackupJob, restore_spec: RestoreSpec) -> RestoreResult:

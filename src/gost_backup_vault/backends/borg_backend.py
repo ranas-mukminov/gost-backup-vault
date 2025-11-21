@@ -1,9 +1,20 @@
+import json
+import logging
 import subprocess
 import time
-import json
 from typing import List
-from ..domain.models import BackupJob, BackupResult, BackendConfig
-from .base import BackupBackend, BackendInitResult, CheckResult, BackupSnapshot, RestoreSpec, RestoreResult
+
+from ..domain.models import BackendConfig, BackupJob, BackupResult
+from .base import (
+    BackupBackend,
+    BackupSnapshot,
+    BackendInitResult,
+    CheckResult,
+    RestoreResult,
+    RestoreSpec,
+)
+
+logger = logging.getLogger(__name__)
 
 class BorgBackend(BackupBackend):
     def __init__(self, config: BackendConfig):
@@ -19,6 +30,7 @@ class BorgBackend(BackupBackend):
         # Borg requires encryption mode during init
         res = self._run_command(["init", "--encryption=repokey", self.repo])
         if res.returncode != 0:
+            logger.error("Borg init failed: %s", res.stderr)
             raise RuntimeError(f"Borg init failed: {res.stderr}")
         return BackendInitResult()
 
@@ -28,19 +40,20 @@ class BorgBackend(BackupBackend):
         cmd = ["create", "--json", archive_name] + job.paths
         
         if job.exclude:
-             for excl in job.exclude:
+            for excl in job.exclude:
                 cmd.extend(["--exclude", excl])
 
         res = self._run_command(cmd)
         duration = time.time() - start_time
 
         if res.returncode != 0:
+            logger.error("Borg backup failed for job %s: %s", job.name, res.stderr)
             return BackupResult(
                 job_name=job.name,
                 success=False,
                 duration_seconds=duration,
                 size_bytes=0,
-                error_message=res.stderr
+                error_message=res.stderr,
             )
         
         # Parse JSON output
@@ -49,7 +62,8 @@ class BorgBackend(BackupBackend):
             archive = data.get("archive", {})
             size_bytes = archive.get("stats", {}).get("deduplicated_size", 0)
             snapshot_id = archive.get("name", archive_name)
-        except Exception:
+        except Exception as exc:  # pragma: no cover - defensive parsing
+            logger.warning("Failed to parse borg output for job %s: %s", job.name, exc)
             size_bytes = 0
             snapshot_id = archive_name
 
@@ -58,7 +72,7 @@ class BorgBackend(BackupBackend):
             success=True,
             duration_seconds=duration,
             size_bytes=size_bytes,
-            snapshot_id=snapshot_id
+            snapshot_id=snapshot_id,
         )
 
     def restore(self, job: BackupJob, restore_spec: RestoreSpec) -> RestoreResult:
@@ -67,7 +81,8 @@ class BorgBackend(BackupBackend):
     def check(self, job: BackupJob) -> CheckResult:
         res = self._run_command(["check", self.repo])
         if res.returncode != 0:
-             raise RuntimeError(f"Borg check failed: {res.stderr}")
+            logger.error("Borg check failed: %s", res.stderr)
+            raise RuntimeError(f"Borg check failed: {res.stderr}")
         return CheckResult()
 
     def list_backups(self, job: BackupJob) -> List[BackupSnapshot]:

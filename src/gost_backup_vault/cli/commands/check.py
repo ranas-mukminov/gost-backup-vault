@@ -2,6 +2,7 @@ import typer
 from pathlib import Path
 from ...config.loader import ConfigLoader
 from ...runner.executor import Executor
+from ...policy.validator import PolicyValidator
 
 app = typer.Typer()
 
@@ -12,6 +13,11 @@ def main(
 ):
     """Check repository integrity."""
     cfg = ConfigLoader.load_from_file(config)
+    errors = PolicyValidator.validate(cfg)
+    if errors:
+        typer.echo(f"Config validation errors: {errors}")
+        raise typer.Exit(code=1)
+
     executor = Executor(cfg)
     
     if dry_run:

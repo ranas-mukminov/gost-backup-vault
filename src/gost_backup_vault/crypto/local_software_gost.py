@@ -1,5 +1,7 @@
 import subprocess
 from typing import BinaryIO
+
+from ..domain.enums import GostCipher
 from ..domain.models import CryptoProfile
 from .base import CryptoProvider
 
@@ -10,7 +12,7 @@ class LocalSoftwareGostProvider(CryptoProvider):
     or just a mock implementation that passes data through if 'none' is selected.
     """
     def encrypt_stream(self, input_stream: BinaryIO, output_stream: BinaryIO, profile: CryptoProfile) -> None:
-        if profile.gost_cipher == "none":
+        if profile.gost_cipher == GostCipher.NONE:
             # Pass through
             while True:
                 chunk = input_stream.read(4096)
@@ -33,7 +35,7 @@ class LocalSoftwareGostProvider(CryptoProvider):
             output_stream.write(chunk[::-1])
 
     def decrypt_stream(self, input_stream: BinaryIO, output_stream: BinaryIO, profile: CryptoProfile) -> None:
-        if profile.gost_cipher == "none":
+        if profile.gost_cipher == GostCipher.NONE:
             while True:
                 chunk = input_stream.read(4096)
                 if not chunk:

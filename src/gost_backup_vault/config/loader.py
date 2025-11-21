@@ -1,8 +1,11 @@
-import yaml
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
+
+import yaml
 from pydantic import ValidationError
+
 from ..domain.models import BackupConfig
+from ..policy.validator import PolicyValidator
 
 class ConfigLoader:
     @staticmethod
@@ -17,11 +20,19 @@ class ConfigLoader:
                 raise ValueError(f"Invalid YAML: {e}")
         
         try:
-            return BackupConfig(**data)
+            config = BackupConfig(**data)
         except ValidationError as e:
             raise ValueError(f"Config validation error: {e}")
 
+        errors = PolicyValidator.validate(config)
+        if errors:
+            raise ValueError(f"Config policy validation errors: {errors}")
+
+        return config
+
     @staticmethod
-    def validate(config: BackupConfig) -> bool:
-        # Add custom validation logic here if needed beyond Pydantic
-        return True
+    def validate(config: BackupConfig) -> List[str]:
+        """
+        Validate a parsed BackupConfig and return a list of error messages.
+        """
+        return PolicyValidator.validate(config)

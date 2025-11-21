@@ -1,11 +1,14 @@
-import time
+import logging
 from typing import List
-from ..domain.models import BackupConfig, BackupResult, BackupJob
+
 from ..backends.base import BackupBackend
-from ..backends.restic_backend import ResticBackend
 from ..backends.borg_backend import BorgBackend
+from ..backends.restic_backend import ResticBackend
 from ..backends.tar_backend import TarBackend
 from ..domain.enums import BackupBackendType
+from ..domain.models import BackupConfig, BackupJob, BackupResult
+
+logger = logging.getLogger(__name__)
 
 class Executor:
     def __init__(self, config: BackupConfig):
@@ -31,10 +34,10 @@ class Executor:
         
         # Init repo if needed (idempotent usually)
         try:
-             self.backend.init_repo(job)
-        except Exception as e:
-             # Log warning but continue, maybe it's already initialized
-             pass
+            self.backend.init_repo(job)
+        except Exception as exc:
+            logger.warning("Backend init failed for job %s: %s", job.name, exc)
+            raise
 
         return self.backend.backup(job)
 
